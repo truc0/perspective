@@ -1,0 +1,56 @@
+{
+    "sizes": [1],
+    "detail": {
+        "main": {
+            "type": "split-area",
+            "orientation": "horizontal",
+            "children": [
+                {
+                    "type": "tab-area",
+                    "widgets": ["PERSPECTIVE_GENERATED_ID_0"],
+                    "currentIndex": 0
+                },
+                {
+                    "type": "tab-area",
+                    "widgets": ["PERSPECTIVE_GENERATED_ID_1"],
+                    "currentIndex": 0
+                },
+                {
+                    "type": "tab-area",
+                    "widgets": ["PERSPECTIVE_GENERATED_ID_2"],
+                    "currentIndex": 0
+                }
+            ],
+            "sizes": [0.33, 0.34, 0.33]
+        }
+    },
+    "viewers": {
+        "PERSPECTIVE_GENERATED_ID_0": {
+            "plugin": "Plotly Bar",
+            "group_by": ["Region"],
+            "columns": ["Sales", "Profit"],
+            "title": "Sales by Region (Bar)",
+            "table": "superstore",
+            "plugin_config": {},
+            "settings": false
+        },
+        "PERSPECTIVE_GENERATED_ID_1": {
+            "plugin": "Plotly Line",
+            "group_by": ["Order Date"],
+            "columns": ["Sales"],
+            "title": "Sales over Time (Line)",
+            "table": "superstore",
+            "plugin_config": {},
+            "settings": false
+        },
+        "PERSPECTIVE_GENERATED_ID_2": {
+            "plugin": "Plotly Pie",
+            "group_by": ["Category"],
+            "columns": ["Sales"],
+            "title": "Sales by Category (Pie)",
+            "table": "superstore",
+            "plugin_config": {},
+            "settings": false
+        }
+    }
+}
