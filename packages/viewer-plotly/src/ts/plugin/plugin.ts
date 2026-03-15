@@ -27,11 +27,15 @@ const DEFAULT_PLUGIN_SETTINGS = {
     selectMode: "select",
 };
 
-const PLOTLY_STYLES = [style].map((x) => {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(x);
-    return sheet;
-});
+let _styleInjected = false;
+
+function injectGlobalStyles() {
+    if (_styleInjected) return;
+    const el = document.createElement("style");
+    el.textContent = style;
+    document.head.appendChild(el);
+    _styleInjected = true;
+}
 
 const EXCLUDED_SETTINGS = [
     "crossValues",
@@ -96,16 +100,12 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
 
     connectedCallback() {
         if (!this._initialized) {
-            this.attachShadow({ mode: "open" });
-            for (const sheet of PLOTLY_STYLES) {
-                this.shadowRoot!.adoptedStyleSheets.push(sheet);
-            }
-
-            this.shadowRoot!.innerHTML += `<div id="container" class="chart"></div>`;
-            this._container = this.shadowRoot!.querySelector(
-                ".chart",
-            ) as HTMLElement;
+            injectGlobalStyles();
             this._initialized = true;
+        }
+        if (!this._container || !this.contains(this._container)) {
+            this.innerHTML = `<div id="container" class="chart"></div>`;
+            this._container = this.querySelector(".chart") as HTMLElement;
         }
     }
 
@@ -329,7 +329,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
         );
 
         if (clear) {
-            this._container.innerHTML = "";
+            try { Plotly.purge(this._container); } catch { /* no-op */ }
         }
 
         await this._draw();
@@ -350,6 +350,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     async _draw() {
         if (this.offsetParent !== null && this._settings) {
             if (this._settings.data.length > 0) {
+                this._container.classList.remove("disabled");
                 await this._chart(this._container, this._settings);
             } else {
                 this._container.classList.add("disabled");
@@ -363,6 +364,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
                 try {
                     Plotly.Plots.resize(this._container);
                 } catch {
+                    try { Plotly.purge(this._container); } catch { /* no-op */ }
                     await this._draw();
                 }
             } else if (this._staged_view) {
