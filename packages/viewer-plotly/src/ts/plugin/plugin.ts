@@ -17,6 +17,7 @@ import { HTMLPerspectiveViewerElement } from "@perspective-dev/viewer";
 import type * as psp_types from "@perspective-dev/viewer";
 
 import { PlotlyChart, PlotlySettings, Type } from "../types";
+import { HTMLPerspectiveViewerPlotlyToolbarElement } from "../custom_elements/toolbar";
 
 const DEFAULT_PLUGIN_SETTINGS = {
     initial: {
@@ -53,7 +54,17 @@ async function register_element(plugin_name: string) {
     await perspectiveViewerClass.registerPlugin(plugin_name);
 }
 
+let _toolbarDefined = false;
+
 export function register(...plugin_names: string[]) {
+    if (!_toolbarDefined) {
+        customElements.define(
+            "perspective-viewer-plotly-toolbar",
+            HTMLPerspectiveViewerPlotlyToolbarElement,
+        );
+        _toolbarDefined = true;
+    }
+
     const plugins = new Set(
         plugin_names.length > 0
             ? plugin_names
@@ -89,6 +100,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     render_warning: boolean;
     _initialized: boolean;
     _container: HTMLElement;
+    _toolbar?: HTMLPerspectiveViewerPlotlyToolbarElement;
     _staged_view: any;
     config: any;
 
@@ -107,6 +119,21 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
             this.innerHTML = `<div id="container" class="chart"></div>`;
             this._container = this.querySelector(".chart") as HTMLElement;
         }
+
+        if (!this._toolbar) {
+            this._toolbar = document.createElement(
+                "perspective-viewer-plotly-toolbar",
+            ) as HTMLPerspectiveViewerPlotlyToolbarElement;
+        }
+
+        const parent = this.parentElement;
+        if (parent) {
+            parent.appendChild(this._toolbar);
+        }
+    }
+
+    disconnectedCallback() {
+        this._toolbar?.parentElement?.removeChild?.(this._toolbar);
     }
 
     get name() {
@@ -355,6 +382,8 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
             } else {
                 this._container.classList.add("disabled");
             }
+
+            this._toolbar?.refreshColumns();
         }
     }
 
@@ -382,6 +411,8 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     }
 
     async delete() {
+        this.disconnectedCallback();
+        this._toolbar = undefined;
         if (this._container) {
             try {
                 Plotly.purge(this._container);

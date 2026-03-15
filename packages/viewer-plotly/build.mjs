@@ -74,11 +74,19 @@ function add(builder, path) {
 
 async function compile_css() {
     fs.mkdirSync("dist/css", { recursive: true });
-    const builder = new BuildCss("");
-    add(builder, "./chart.less");
+
+    const builder1 = new BuildCss("");
+    add(builder1, "./chart.less");
     fs.writeFileSync(
         "dist/css/perspective-viewer-plotly.css",
-        builder.compile().get("chart.css"),
+        builder1.compile().get("chart.css"),
+    );
+
+    const builder2 = new BuildCss("");
+    add(builder2, "./toolbar.less");
+    fs.writeFileSync(
+        "dist/css/perspective-viewer-plotly-toolbar.css",
+        builder2.compile().get("toolbar.css"),
     );
 }
 

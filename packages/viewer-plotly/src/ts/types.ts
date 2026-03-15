@@ -47,6 +47,20 @@ export interface MainValue {
     type: Type;
 }
 
+export type PlotlyLineStyle =
+    | "solid"
+    | "dash"
+    | "dot"
+    | "dashdot"
+    | "longdash";
+
+export interface PlotlyColumnStyle {
+    color?: string;
+    line_style?: PlotlyLineStyle;
+}
+
+export type PlotlyColumnStyles = Record<string, PlotlyColumnStyle>;
+
 export interface PlotlySettings {
     realValues: string[];
     crossValues: { name: string; type: Type }[];
@@ -55,6 +69,7 @@ export interface PlotlySettings {
     filter: any[];
     data: Record<string, any>[];
     columns_config?: ColumnConfigValues;
+    plotly_column_styles?: PlotlyColumnStyles;
     size: DOMRect;
     [key: string]: any;
 }

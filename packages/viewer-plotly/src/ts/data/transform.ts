@@ -10,7 +10,7 @@
 // ┃ of the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-import type { PlotlySettings, Type } from "../types";
+import type { PlotlySettings, PlotlyColumnStyles, Type } from "../types";
 
 export interface TraceResult {
     traces: Plotly.Data[];
@@ -80,17 +80,61 @@ const PLOTLY_LAYOUT_BASE: Partial<Plotly.Layout> = {
     legend: { orientation: "h", y: -0.2 },
 };
 
+function applyBarStyle(
+    trace: Plotly.Data,
+    columnName: string,
+    styles?: PlotlyColumnStyles,
+): void {
+    const s = styles?.[columnName];
+    if (s?.color) {
+        (trace as any).marker = { ...(trace as any).marker, color: s.color };
+    }
+}
+
+function applyLineStyle(
+    trace: Plotly.Data,
+    columnName: string,
+    styles?: PlotlyColumnStyles,
+): void {
+    const s = styles?.[columnName];
+    if (!s) return;
+    const line: Record<string, any> = { ...(trace as any).line };
+    if (s.color) {
+        line.color = s.color;
+    }
+    if (s.line_style) {
+        line.dash = s.line_style;
+    }
+    (trace as any).line = line;
+}
+
+function applyScatterStyle(
+    trace: Plotly.Data,
+    columnName: string,
+    styles?: PlotlyColumnStyles,
+): void {
+    const s = styles?.[columnName];
+    if (s?.color) {
+        (trace as any).marker = { ...(trace as any).marker, color: s.color };
+    }
+}
+
 export function toBarTraces(settings: PlotlySettings): TraceResult {
     const dateAxis = isDateCrossAxis(settings);
     const xData = dateAxis
         ? getDateCrossValues(settings)
         : getCrossLabels(settings);
-    const traces: Plotly.Data[] = settings.mainValues.map((mv) => ({
-        type: "bar" as const,
-        x: xData,
-        y: settings.data.map((row) => row[mv.name]),
-        name: mv.name,
-    }));
+    const styles = settings.plotly_column_styles;
+    const traces: Plotly.Data[] = settings.mainValues.map((mv) => {
+        const trace: Plotly.Data = {
+            type: "bar" as const,
+            x: xData,
+            y: settings.data.map((row) => row[mv.name]),
+            name: mv.name,
+        };
+        applyBarStyle(trace, mv.name, styles);
+        return trace;
+    });
 
     const layout: Partial<Plotly.Layout> = {
         ...PLOTLY_LAYOUT_BASE,
@@ -115,13 +159,18 @@ export function toLineTraces(settings: PlotlySettings): TraceResult {
     const xData = dateAxis
         ? getDateCrossValues(settings)
         : getCrossLabels(settings);
-    const traces: Plotly.Data[] = settings.mainValues.map((mv) => ({
-        type: "scatter" as const,
-        mode: "lines" as const,
-        x: xData,
-        y: settings.data.map((row) => row[mv.name]),
-        name: mv.name,
-    }));
+    const styles = settings.plotly_column_styles;
+    const traces: Plotly.Data[] = settings.mainValues.map((mv) => {
+        const trace: Plotly.Data = {
+            type: "scatter" as const,
+            mode: "lines" as const,
+            x: xData,
+            y: settings.data.map((row) => row[mv.name]),
+            name: mv.name,
+        };
+        applyLineStyle(trace, mv.name, styles);
+        return trace;
+    });
 
     const layout: Partial<Plotly.Layout> = {
         ...PLOTLY_LAYOUT_BASE,
@@ -150,19 +199,24 @@ export function toScatterTraces(settings: PlotlySettings): TraceResult {
             ? settings.data.map((row) => row[settings.mainValues[1].name])
             : [];
 
-    const traces: Plotly.Data[] = [
-        {
-            type: "scatter" as const,
-            mode: "markers" as const,
-            x: xValues,
-            y: yValues,
-            text: getCrossLabels(settings),
-            name:
-                settings.mainValues.length >= 2
-                    ? `${settings.mainValues[0].name} vs ${settings.mainValues[1].name}`
-                    : "",
-        },
-    ];
+    const styles = settings.plotly_column_styles;
+    const trace: Plotly.Data = {
+        type: "scatter" as const,
+        mode: "markers" as const,
+        x: xValues,
+        y: yValues,
+        text: getCrossLabels(settings),
+        name:
+            settings.mainValues.length >= 2
+                ? `${settings.mainValues[0].name} vs ${settings.mainValues[1].name}`
+                : "",
+    };
+
+    if (settings.mainValues.length >= 1) {
+        applyScatterStyle(trace, settings.mainValues[0].name, styles);
+    }
+
+    const traces: Plotly.Data[] = [trace];
 
     const layout: Partial<Plotly.Layout> = {
         ...PLOTLY_LAYOUT_BASE,
@@ -190,15 +244,26 @@ export function toPieTraces(settings: PlotlySettings): TraceResult {
             ? settings.data.map((row) => row[settings.mainValues[0].name])
             : [];
 
-    const traces: Plotly.Data[] = [
-        {
-            type: "pie" as const,
-            labels,
-            values,
-            textinfo: "label+percent",
-            hoverinfo: "label+value+percent",
-        },
-    ];
+    const trace: Plotly.Data = {
+        type: "pie" as const,
+        labels,
+        values,
+        textinfo: "label+percent",
+        hoverinfo: "label+value+percent",
+    };
+
+    const styles = settings.plotly_column_styles;
+    if (settings.mainValues.length >= 1) {
+        const s = styles?.[settings.mainValues[0].name];
+        if (s?.color) {
+            (trace as any).marker = {
+                ...(trace as any).marker,
+                colors: labels.map(() => s.color),
+            };
+        }
+    }
+
+    const traces: Plotly.Data[] = [trace];
 
     const layout: Partial<Plotly.Layout> = {
         ...PLOTLY_LAYOUT_BASE,
