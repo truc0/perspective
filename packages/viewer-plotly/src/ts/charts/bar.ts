@@ -12,6 +12,12 @@
 
 import Plotly from "plotly.js-basic-dist-min";
 import { toBarTraces } from "../data/transform";
+import {
+    resolveConfig,
+    buildPlotlyConfig,
+    applyConfigToLayout,
+} from "../config";
+import { attachDrawlineHandlers } from "../drawline";
 import type { PlotlyChart, PlotlySettings } from "../types";
 
 const barChart: PlotlyChart = async function (
@@ -19,7 +25,10 @@ const barChart: PlotlyChart = async function (
     settings: PlotlySettings,
 ) {
     const { traces, layout } = toBarTraces(settings);
-    await Plotly.react(container, traces, layout, { responsive: true });
+    const resolved = resolveConfig(settings.plotly_plugin_config);
+    applyConfigToLayout(layout, resolved);
+    await Plotly.react(container, traces, layout, buildPlotlyConfig(resolved));
+    attachDrawlineHandlers(container, resolved.enableDrawline);
 };
 
 barChart.plugin = {

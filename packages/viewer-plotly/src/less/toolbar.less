@@ -186,3 +186,24 @@
     color: inherit;
     cursor: pointer;
 }
+
+.config-section {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--inactive--border-color, #eee);
+}
+
+.config-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+
+    input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+}

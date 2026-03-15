@@ -356,7 +356,11 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
         );
 
         if (clear) {
-            try { Plotly.purge(this._container); } catch { /* no-op */ }
+            try {
+                Plotly.purge(this._container);
+            } catch {
+                /* no-op */
+            }
         }
 
         await this._draw();
@@ -393,7 +397,11 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
                 try {
                     Plotly.Plots.resize(this._container);
                 } catch {
-                    try { Plotly.purge(this._container); } catch { /* no-op */ }
+                    try {
+                        Plotly.purge(this._container);
+                    } catch {
+                        /* no-op */
+                    }
                     await this._draw();
                 }
             } else if (this._staged_view) {

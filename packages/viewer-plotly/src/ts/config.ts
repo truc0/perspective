@@ -10,37 +10,38 @@
 // ┃ of the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-import Plotly from "plotly.js-basic-dist-min";
-import { toScatterTraces } from "../data/transform";
-import {
-    resolveConfig,
-    buildPlotlyConfig,
-    applyConfigToLayout,
-} from "../config";
-import { attachDrawlineHandlers } from "../drawline";
-import type { PlotlyChart, PlotlySettings } from "../types";
+import type { PlotlyPluginConfig } from "./types";
 
-const scatterChart: PlotlyChart = async function (
-    container: HTMLElement,
-    settings: PlotlySettings,
-) {
-    const { traces, layout } = toScatterTraces(settings);
-    const resolved = resolveConfig(settings.plotly_plugin_config);
-    applyConfigToLayout(layout, resolved);
-    await Plotly.react(container, traces, layout, buildPlotlyConfig(resolved));
-    attachDrawlineHandlers(container, resolved.enableDrawline);
+export const DEFAULT_PLUGIN_CONFIG: Required<PlotlyPluginConfig> = {
+    scrollZoom: true,
+    enableDrawline: false,
+    showlegend: true,
 };
 
-scatterChart.plugin = {
-    name: "Plotly Scatter",
-    category: "XY Chart",
-    max_cells: 4000,
-    max_columns: 50,
-    render_warning: true,
-    initial: {
-        count: 2,
-        names: ["X Axis", "Y Axis"],
-    },
-};
+export function resolveConfig(
+    config?: PlotlyPluginConfig,
+): Required<PlotlyPluginConfig> {
+    return { ...DEFAULT_PLUGIN_CONFIG, ...config };
+}
 
-export default scatterChart;
+export function buildPlotlyConfig(
+    config: Required<PlotlyPluginConfig>,
+): Partial<Plotly.Config> {
+    const plotlyConfig: Partial<Plotly.Config> = {
+        responsive: true,
+        scrollZoom: config.scrollZoom,
+    };
+
+    if (config.enableDrawline) {
+        (plotlyConfig as any).modeBarButtonsToAdd = ["drawline"];
+    }
+
+    return plotlyConfig;
+}
+
+export function applyConfigToLayout(
+    layout: Partial<Plotly.Layout>,
+    config: Required<PlotlyPluginConfig>,
+): void {
+    layout.showlegend = config.showlegend;
+}

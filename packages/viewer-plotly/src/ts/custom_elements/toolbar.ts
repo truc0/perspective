@@ -15,7 +15,9 @@ import type {
     PlotlySettings,
     PlotlyColumnStyle,
     PlotlyLineStyle,
+    PlotlyPluginConfig,
 } from "../types";
+import { DEFAULT_PLUGIN_CONFIG } from "../config";
 
 const stylesheet = new CSSStyleSheet();
 stylesheet.replaceSync(TOOLBAR_STYLE);
@@ -77,7 +79,10 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
 
     disconnectedCallback(): void {
         if (this._outsideClickHandler) {
-            document.removeEventListener("mousedown", this._outsideClickHandler);
+            document.removeEventListener(
+                "mousedown",
+                this._outsideClickHandler,
+            );
             this._outsideClickHandler = null;
         }
     }
@@ -119,6 +124,8 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
 
         const panel = document.createElement("div");
         panel.className = "style-panel";
+
+        this._buildConfigSection(panel, plugin, settings);
 
         const title = document.createElement("div");
         title.className = "style-panel-title";
@@ -174,6 +181,80 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         toolbar.appendChild(panel);
         this._panel = panel;
         this._panelOpen = true;
+    }
+
+    private _buildConfigSection(
+        panel: HTMLElement,
+        plugin: PlotlyPluginElement,
+        settings: PlotlySettings,
+    ): void {
+        const config = settings.plotly_plugin_config ?? {};
+
+        const section = document.createElement("div");
+        section.className = "config-section";
+
+        const sectionTitle = document.createElement("div");
+        sectionTitle.className = "style-panel-title";
+        sectionTitle.textContent = "Chart Options";
+        section.appendChild(sectionTitle);
+
+        const OPTIONS: {
+            key: keyof PlotlyPluginConfig;
+            label: string;
+        }[] = [
+            { key: "scrollZoom", label: "Scroll Zoom" },
+            { key: "enableDrawline", label: "Enable Drawline" },
+            { key: "showlegend", label: "Show Legend" },
+        ];
+
+        for (const opt of OPTIONS) {
+            const row = document.createElement("label");
+            row.className = "config-row";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked =
+                config[opt.key] ?? DEFAULT_PLUGIN_CONFIG[opt.key];
+            checkbox.addEventListener("change", () => {
+                this._updatePluginConfig(opt.key, checkbox.checked);
+            });
+            row.appendChild(checkbox);
+
+            const label = document.createElement("span");
+            label.textContent = opt.label;
+            row.appendChild(label);
+
+            section.appendChild(row);
+        }
+
+        panel.appendChild(section);
+    }
+
+    private _updatePluginConfig(
+        key: keyof PlotlyPluginConfig,
+        value: boolean,
+    ): void {
+        const plugin = this._getPlugin();
+        if (!plugin?._settings) return;
+
+        const settings = plugin._settings;
+        if (!settings.plotly_plugin_config) {
+            settings.plotly_plugin_config = {};
+        }
+
+        settings.plotly_plugin_config = {
+            ...settings.plotly_plugin_config,
+            [key]: value,
+        };
+
+        this.dispatchEvent(
+            new Event("perspective-plugin-update", {
+                bubbles: true,
+                composed: true,
+            }),
+        );
+
+        plugin._draw();
     }
 
     private _updateColumnStyle(
