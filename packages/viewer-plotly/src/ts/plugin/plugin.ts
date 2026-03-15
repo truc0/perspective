@@ -101,8 +101,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
                 this.shadowRoot!.adoptedStyleSheets.push(sheet);
             }
 
-            this.shadowRoot!.innerHTML +=
-                `<div id="container" class="chart"></div>`;
+            this.shadowRoot!.innerHTML += `<div id="container" class="chart"></div>`;
             this._container = this.shadowRoot!.querySelector(
                 ".chart",
             ) as HTMLElement;
@@ -196,12 +195,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
         await this.update(view, end_col, end_row, true);
     }
 
-    async update(
-        view: any,
-        end_col?: number,
-        end_row?: number,
-        clear = false,
-    ) {
+    async update(view: any, end_col?: number, end_row?: number, clear = false) {
         if (this.offsetParent === null) {
             return;
         }

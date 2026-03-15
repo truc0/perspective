@@ -30,18 +30,10 @@ declare global {
             tagName: "perspective-viewer-plotlypie",
         ): typeof HTMLPerspectiveViewerPlotlyPluginElement;
 
-        whenDefined(
-            tagName: "perspective-viewer-plotlybar",
-        ): Promise<void>;
-        whenDefined(
-            tagName: "perspective-viewer-plotlyline",
-        ): Promise<void>;
-        whenDefined(
-            tagName: "perspective-viewer-plotlyscatter",
-        ): Promise<void>;
-        whenDefined(
-            tagName: "perspective-viewer-plotlypie",
-        ): Promise<void>;
+        whenDefined(tagName: "perspective-viewer-plotlybar"): Promise<void>;
+        whenDefined(tagName: "perspective-viewer-plotlyline"): Promise<void>;
+        whenDefined(tagName: "perspective-viewer-plotlyscatter"): Promise<void>;
+        whenDefined(tagName: "perspective-viewer-plotlypie"): Promise<void>;
     }
 
     export interface HTMLPerspectiveViewerPlotlyPluginElement
