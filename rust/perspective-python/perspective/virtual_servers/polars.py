@@ -217,6 +217,13 @@ class PolarsVirtualServerHandler(VirtualServerHandler):
         self.views.pop(view_name, None)
         self.view_schemas.pop(view_name, None)
 
+    def view_get_min_max(self, view_name, column_name, config):
+        df = self.views[view_name]
+        col = df[column_name]
+        min_val = col.min()
+        max_val = col.max()
+        return (min_val, max_val)
+
     def view_get_data(self, view_name, config, schema, viewport, data):
         df = self.views.get(view_name)
         if df is None:
@@ -271,7 +278,12 @@ class PolarsVirtualServerHandler(VirtualServerHandler):
                 push_col = col.replace("_", "|")
 
             for ridx, value in enumerate(values):
-                grouping_id = grouping_ids[ridx] if grouping_ids else None
+                if grouping_ids:
+                    grouping_id = grouping_ids[ridx]
+                elif has_group_by:
+                    grouping_id = 0
+                else:
+                    grouping_id = None
 
                 if value is not None and isinstance(value, float) and value != value:
                     value = None

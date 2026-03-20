@@ -25,9 +25,10 @@ use crate::proto::{
     ColumnType, GetFeaturesResp, GetHostedTablesResp, MakeTableResp, Request, Response,
     ServerError, TableMakePortResp, TableMakeViewResp, TableOnDeleteResp, TableRemoveDeleteResp,
     TableSchemaResp, TableSizeResp, TableValidateExprResp, ViewColumnPathsResp, ViewDeleteResp,
-    ViewDimensionsResp, ViewExpressionSchemaResp, ViewGetConfigResp, ViewOnDeleteResp,
-    ViewOnUpdateResp, ViewRemoveDeleteResp, ViewRemoveOnUpdateResp, ViewSchemaResp,
-    ViewToColumnsStringResp, ViewToRowsStringResp,
+    ViewDimensionsResp, ViewExpressionSchemaResp, ViewGetConfigResp, ViewGetMinMaxResp,
+    ViewOnDeleteResp, ViewOnUpdateResp, ViewRemoveDeleteResp, ViewRemoveOnUpdateResp,
+    ViewSchemaResp, ViewToArrowResp, ViewToColumnsStringResp, ViewToCsvResp,
+    ViewToNdjsonStringResp, ViewToRowsStringResp,
 };
 
 macro_rules! respond {
@@ -297,16 +298,78 @@ impl<T: VirtualServerHandler> VirtualServer<T> {
                         .collect()
                 })
             },
-            ViewToRowsStringReq(view_to_rows_string_req) => {
-                let viewport = view_to_rows_string_req.viewport.unwrap();
+            ViewToArrowReq(view_to_arrow_req) => {
+                let viewport = view_to_arrow_req.viewport.unwrap();
                 let schema = self.get_cached_view_schema(&msg.entity_id, false).await?;
                 let config = self.view_configs.get(&msg.entity_id).unwrap();
-                let cols = self
+                let mut cols = self
                     .handler
                     .view_get_data(msg.entity_id.as_str(), config, &schema, &viewport)
                     .await?;
 
-                let rows = cols.to_rows();
+                let arrow = cols
+                    .render_to_arrow_ipc()
+                    .map_err(|e| VirtualServerError::Other(e.to_string()))?;
+
+                respond!(msg, ViewToArrowResp { arrow })
+            },
+            ViewToCsvReq(view_to_csv_req) => {
+                let viewport = view_to_csv_req.viewport.unwrap();
+                let schema = self.get_cached_view_schema(&msg.entity_id, false).await?;
+                let config = self.view_configs.get(&msg.entity_id).unwrap();
+                let mut cols = self
+                    .handler
+                    .view_get_data(msg.entity_id.as_str(), config, &schema, &viewport)
+                    .await?;
+
+                let rows = cols.render_to_rows();
+                let mut csv = String::new();
+                if let Some(first_row) = rows.first() {
+                    let headers: Vec<&str> = first_row.keys().map(|k| k.as_str()).collect();
+                    csv.push_str(&headers.join(","));
+                    csv.push('\n');
+                }
+
+                for row in &rows {
+                    let values: Vec<String> = row
+                        .values()
+                        .map(|cell| serde_json::to_string(cell).unwrap_or_default())
+                        .collect();
+                    csv.push_str(&values.join(","));
+                    csv.push('\n');
+                }
+
+                respond!(msg, ViewToCsvResp { csv })
+            },
+            ViewToNdjsonStringReq(view_to_ndjson_req) => {
+                let viewport = view_to_ndjson_req.viewport.unwrap();
+                let schema = self.get_cached_view_schema(&msg.entity_id, false).await?;
+                let config = self.view_configs.get(&msg.entity_id).unwrap();
+                let mut cols = self
+                    .handler
+                    .view_get_data(msg.entity_id.as_str(), config, &schema, &viewport)
+                    .await?;
+
+                let rows = cols.render_to_rows();
+                let ndjson_string = rows
+                    .iter()
+                    .map(serde_json::to_string)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| VirtualServerError::InvalidJSON(std::sync::Arc::new(e)))?
+                    .join("\n");
+
+                respond!(msg, ViewToNdjsonStringResp { ndjson_string })
+            },
+            ViewToRowsStringReq(view_to_rows_string_req) => {
+                let viewport = view_to_rows_string_req.viewport.unwrap();
+                let schema = self.get_cached_view_schema(&msg.entity_id, false).await?;
+                let config = self.view_configs.get(&msg.entity_id).unwrap();
+                let mut cols = self
+                    .handler
+                    .view_get_data(msg.entity_id.as_str(), config, &schema, &viewport)
+                    .await?;
+
+                let rows = cols.render_to_rows();
                 let json_string = serde_json::to_string(&rows)
                     .map_err(|e| VirtualServerError::InvalidJSON(std::sync::Arc::new(e)))?;
 
@@ -316,13 +379,14 @@ impl<T: VirtualServerHandler> VirtualServer<T> {
                 let viewport = view_to_columns_string_req.viewport.unwrap();
                 let schema = self.get_cached_view_schema(&msg.entity_id, false).await?;
                 let config = self.view_configs.get(&msg.entity_id).unwrap();
-                let cols = self
+                let mut cols = self
                     .handler
                     .view_get_data(msg.entity_id.as_str(), config, &schema, &viewport)
                     .await?;
 
-                let json_string = serde_json::to_string(&cols)
-                    .map_err(|e| VirtualServerError::InvalidJSON(std::sync::Arc::new(e)))?;
+                let json_string = cols
+                    .render_to_columns_json()
+                    .map_err(|e| VirtualServerError::Other(e.to_string()))?;
 
                 respond!(msg, ViewToColumnsStringResp { json_string })
             },
@@ -337,6 +401,17 @@ impl<T: VirtualServerHandler> VirtualServer<T> {
                     .make_table(&msg.entity_id, req.data.as_ref().unwrap())
                     .await?;
                 respond!(msg, MakeTableResp {})
+            },
+            ViewGetMinMaxReq(req) => {
+                let config = self.view_configs.get(&msg.entity_id).unwrap();
+                let (min, max) = self
+                    .handler
+                    .view_get_min_max(&msg.entity_id, &req.column_name, config)
+                    .await?;
+                respond!(msg, ViewGetMinMaxResp {
+                    min: Some(min.into()),
+                    max: Some(max.into()),
+                })
             },
 
             // Stub implementations for callback/update requests that VirtualServer doesn't support
@@ -361,7 +436,6 @@ impl<T: VirtualServerHandler> VirtualServer<T> {
             ViewRemoveDeleteReq(_) => {
                 respond!(msg, ViewRemoveDeleteResp {})
             },
-
             x => {
                 // Return an error response instead of empty bytes
                 return Err(VirtualServerError::Other(format!(
