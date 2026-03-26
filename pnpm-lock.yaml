@@ -145,8 +145,8 @@ catalogs:
       specifier: ^5.3.2
       version: 5.3.3
     plotly.js-basic-dist-min:
-      specifier: ^2.35.0
-      version: 2.35.3
+      specifier: ^3.4.0
+      version: 3.4.0
     prettier:
       specifier: '>=3 <4'
       version: 3.6.2
@@ -975,7 +975,7 @@ importers:
         version: link:../../rust/perspective-viewer
       plotly.js-basic-dist-min:
         specifier: 'catalog:'
-        version: 2.35.3
+        version: 3.4.0
     devDependencies:
       '@perspective-dev/esbuild-plugin':
         specifier: 'workspace:'
@@ -3458,6 +3458,11 @@ packages:
   '@rollup/rollup-darwin-arm64@4.52.5':
     resolution: {integrity: sha512-takF3CR71mCAGA+v794QUZ0b6ZSrgJkArC+gUiG6LB6TQty9T0Mqh3m2ImRBOxS2IeYBo4lKWIieSvnEk2OQWA==}
     cpu: [arm64]
+    os: [darwin]
+
+  '@rollup/rollup-darwin-x64@4.52.5':
+    resolution: {integrity: sha512-W901Pla8Ya95WpxDn//VF9K9u2JbocwV/v75TE0YIHNTbhqUTv9w4VuQ9MaWlNOkkEfFwkdNhXgcLqPSmHy0fA==}
+    cpu: [x64]
     os: [darwin]
 
   '@rollup/rollup-freebsd-arm64@4.52.5':
@@ -7297,8 +7302,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  plotly.js-basic-dist-min@2.35.3:
-    resolution: {integrity: sha512-ZipAmyME0S5qWec6GDy2dxP+E6Qhi0X6eNwH6gy7m5YMKYSgrDYrc+/3PTPWpJsxcIMF0kqoOruX+SgH2VwOWg==}
+  plotly.js-basic-dist-min@3.4.0:
+    resolution: {integrity: sha512-ZZgnlcwy4R0IBgrrTha0IDhVERQUTzneAVUB0v8S/myjJvCjpNnqIm4lYAdeK3kPg68Jf8LV2x92BWBOJPP/pw==}
 
   portfinder@1.0.38:
     resolution: {integrity: sha512-rEwq/ZHlJIKw++XtLAO8PPuOQA/zaPJOZJ37BVuN97nLpMJeuDVLVGRwbFoBgLudgdTMP2hdRJP++H+8QOA3vg==}
@@ -12682,6 +12687,9 @@ snapshots:
   '@rollup/rollup-darwin-arm64@4.52.5':
     optional: true
 
+  '@rollup/rollup-darwin-x64@4.52.5':
+    optional: true
+
   '@rollup/rollup-freebsd-arm64@4.52.5':
     optional: true
 
@@ -17152,7 +17160,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  plotly.js-basic-dist-min@2.35.3: {}
+  plotly.js-basic-dist-min@3.4.0: {}
 
   portfinder@1.0.38:
     dependencies:
@@ -18087,6 +18095,7 @@ snapshots:
       '@rollup/rollup-android-arm-eabi': 4.52.5
       '@rollup/rollup-android-arm64': 4.52.5
       '@rollup/rollup-darwin-arm64': 4.52.5
+      '@rollup/rollup-darwin-x64': 4.52.5
       '@rollup/rollup-freebsd-arm64': 4.52.5
       '@rollup/rollup-freebsd-x64': 4.52.5
       '@rollup/rollup-linux-arm-gnueabihf': 4.52.5
