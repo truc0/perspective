@@ -167,7 +167,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     }
 
     static get max_cells() {
-        return this._chart.plugin.max_cells || 10_000;
+        return this._chart.plugin.max_cells || 1_000_000;
     }
 
     static set max_cells(x) {
@@ -175,7 +175,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     }
 
     static get max_columns() {
-        return this._chart.plugin.max_columns || 50;
+        return this._chart.plugin.max_columns || 500;
     }
 
     static set max_columns(x) {
@@ -183,7 +183,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     }
 
     get max_cells() {
-        return this._chart.plugin.max_cells || 10_000;
+        return this._chart.plugin.max_cells || 1_000_000;
     }
 
     set max_cells(x) {
@@ -191,7 +191,7 @@ class HTMLPerspectiveViewerPlotlyPluginElement extends HTMLElement {
     }
 
     get max_columns() {
-        return this._chart.plugin.max_columns || 50;
+        return this._chart.plugin.max_columns || 500;
     }
 
     set max_columns(x) {
