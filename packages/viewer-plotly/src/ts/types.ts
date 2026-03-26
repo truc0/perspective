@@ -49,6 +49,8 @@ export interface MainValue {
 
 export type PlotlyLineStyle = "solid" | "dash" | "dot" | "dashdot" | "longdash";
 
+export type PlotlyLegendPosition = "bottom" | "right" | "left";
+
 export interface PlotlyColumnStyle {
     color?: string;
     line_style?: PlotlyLineStyle;
@@ -71,6 +73,7 @@ export interface PlotlyPluginConfig {
     scrollZoom?: boolean;
     enableDrawline?: boolean;
     showlegend?: boolean;
+    legendPosition?: PlotlyLegendPosition;
     tradingHours?: TradingHoursConfig;
 }
 

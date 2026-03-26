@@ -10,13 +10,14 @@
 // ┃ of the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-import type { PlotlyPluginConfig } from "./types";
+import type { PlotlyPluginConfig, PlotlyLegendPosition } from "./types";
 import { applyTradingHoursToLayout } from "./data/tradingHours";
 
 export const DEFAULT_PLUGIN_CONFIG: Required<PlotlyPluginConfig> = {
     scrollZoom: true,
     enableDrawline: false,
     showlegend: true,
+    legendPosition: "bottom",
     tradingHours: {
         enabled: false,
         sessions: [
@@ -48,11 +49,27 @@ export function buildPlotlyConfig(
     return plotlyConfig;
 }
 
+const LEGEND_POSITIONS: Record<
+    PlotlyLegendPosition,
+    Partial<Plotly.Legend>
+> = {
+    bottom: { orientation: "h", y: -0.2 },
+    right: { orientation: "v", x: 1.02, y: 1, xanchor: "left" },
+    left: { orientation: "v", x: -0.15, y: 1, xanchor: "right" },
+};
+
 export function applyConfigToLayout(
     layout: Partial<Plotly.Layout>,
     config: Required<PlotlyPluginConfig>,
     isDateAxis?: boolean,
 ): void {
     layout.showlegend = config.showlegend;
+    layout.legend = {
+        ...layout.legend,
+        ...LEGEND_POSITIONS[config.legendPosition],
+    };
+    if (config.legendPosition === "left") {
+        layout.margin = { ...layout.margin, l: 100 };
+    }
     applyTradingHoursToLayout(layout, config.tradingHours, isDateAxis ?? false);
 }

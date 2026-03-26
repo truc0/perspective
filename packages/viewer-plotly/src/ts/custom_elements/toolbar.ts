@@ -16,10 +16,12 @@ import type {
     PlotlyColumnStyle,
     PlotlyLineStyle,
     PlotlyPluginConfig,
+    PlotlyLegendPosition,
     TradingHoursConfig,
     TradingSession,
 } from "../types";
 import { DEFAULT_PLUGIN_CONFIG } from "../config";
+import { PLOTLY_COLORS } from "../data/transform";
 
 const stylesheet = new CSSStyleSheet();
 stylesheet.replaceSync(TOOLBAR_STYLE);
@@ -135,7 +137,8 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         title.textContent = "Column Styles";
         panel.appendChild(title);
 
-        for (const mv of settings.mainValues) {
+        for (let mvIdx = 0; mvIdx < settings.mainValues.length; mvIdx++) {
+            const mv = settings.mainValues[mvIdx];
             const colStyle: PlotlyColumnStyle = styles[mv.name] || {};
             const row = document.createElement("div");
             row.className = "style-row";
@@ -146,9 +149,10 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
             label.title = mv.name;
             row.appendChild(label);
 
+            const defaultColor = PLOTLY_COLORS[mvIdx % PLOTLY_COLORS.length];
             const colorInput = document.createElement("input");
             colorInput.type = "color";
-            colorInput.value = colStyle.color || "#1f77b4";
+            colorInput.value = colStyle.color || defaultColor;
             colorInput.title = `Color for ${mv.name}`;
             colorInput.addEventListener("input", () => {
                 this._updateColumnStyle(mv.name, {
@@ -202,13 +206,45 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         section.appendChild(sectionTitle);
 
         const OPTIONS: {
-            key: keyof Omit<PlotlyPluginConfig, "tradingHours">;
+            key: keyof Omit<PlotlyPluginConfig, "tradingHours" | "legendPosition">;
             label: string;
         }[] = [
             { key: "scrollZoom", label: "Scroll Zoom" },
             { key: "enableDrawline", label: "Enable Drawline" },
             { key: "showlegend", label: "Show Legend" },
         ];
+
+        const showLegendOn = config.showlegend ?? DEFAULT_PLUGIN_CONFIG.showlegend;
+
+        const legendRow = document.createElement("label");
+        legendRow.className = "config-row";
+        legendRow.style.display = showLegendOn ? "" : "none";
+        const legendLabel = document.createElement("span");
+        legendLabel.textContent = "Legend Position";
+        legendRow.appendChild(legendLabel);
+        const legendSelect = document.createElement("select");
+        const LEGEND_OPTIONS: { value: PlotlyLegendPosition; label: string }[] = [
+            { value: "bottom", label: "Bottom" },
+            { value: "right", label: "Right" },
+            { value: "left", label: "Left" },
+        ];
+        const currentPos = config.legendPosition ?? DEFAULT_PLUGIN_CONFIG.legendPosition;
+        for (const lo of LEGEND_OPTIONS) {
+            const opt = document.createElement("option");
+            opt.value = lo.value;
+            opt.textContent = lo.label;
+            if (lo.value === currentPos) {
+                opt.selected = true;
+            }
+            legendSelect.appendChild(opt);
+        }
+        legendSelect.addEventListener("change", () => {
+            this._updatePluginConfig(
+                "legendPosition",
+                legendSelect.value as PlotlyLegendPosition,
+            );
+        });
+        legendRow.appendChild(legendSelect);
 
         for (const opt of OPTIONS) {
             const row = document.createElement("label");
@@ -220,6 +256,9 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
                 config[opt.key] ?? DEFAULT_PLUGIN_CONFIG[opt.key];
             checkbox.addEventListener("change", () => {
                 this._updatePluginConfig(opt.key, checkbox.checked);
+                if (opt.key === "showlegend") {
+                    legendRow.style.display = checkbox.checked ? "" : "none";
+                }
             });
             row.appendChild(checkbox);
 
@@ -230,12 +269,14 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
             section.appendChild(row);
         }
 
+        section.appendChild(legendRow);
+
         panel.appendChild(section);
     }
 
     private _updatePluginConfig(
         key: keyof PlotlyPluginConfig,
-        value: boolean,
+        value: boolean | string,
     ): void {
         const plugin = this._getPlugin();
         if (!plugin?._settings) return;

@@ -79,13 +79,26 @@ function getCrossLabels(settings: PlotlySettings): string[] {
     });
 }
 
+export const PLOTLY_COLORS = [
+    "#636efa",
+    "#EF553B",
+    "#00cc96",
+    "#ab63fa",
+    "#FFA15A",
+    "#19d3f3",
+    "#FF6692",
+    "#B6E880",
+    "#FF97FF",
+    "#FECB52",
+];
+
 const PLOTLY_LAYOUT_BASE: Partial<Plotly.Layout> = {
     autosize: true,
     margin: { l: 50, r: 30, t: 30, b: 50 },
     paper_bgcolor: "transparent",
     plot_bgcolor: "transparent",
     font: { color: "inherit" },
-    legend: { orientation: "h", y: -0.2 },
+    colorway: PLOTLY_COLORS,
 };
 
 function applyBarStyle(
@@ -126,19 +139,6 @@ function applyScatterStyle(
         (trace as any).marker = { ...(trace as any).marker, color: s.color };
     }
 }
-
-const PLOTLY_COLORS = [
-    "#636efa",
-    "#EF553B",
-    "#00cc96",
-    "#ab63fa",
-    "#FFA15A",
-    "#19d3f3",
-    "#FF6692",
-    "#B6E880",
-    "#FF97FF",
-    "#FECB52",
-];
 
 function getColumnColor(settings: PlotlySettings, colName: string): string {
     const idx = settings.mainValues.findIndex((mv) => mv.name === colName);
