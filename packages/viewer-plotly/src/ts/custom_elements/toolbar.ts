@@ -16,6 +16,8 @@ import type {
     PlotlyColumnStyle,
     PlotlyLineStyle,
     PlotlyPluginConfig,
+    TradingHoursConfig,
+    TradingSession,
 } from "../types";
 import { DEFAULT_PLUGIN_CONFIG } from "../config";
 
@@ -126,6 +128,7 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         panel.className = "style-panel";
 
         this._buildConfigSection(panel, plugin, settings);
+        this._buildTradingHoursSection(panel, plugin, settings);
 
         const title = document.createElement("div");
         title.className = "style-panel-title";
@@ -199,7 +202,7 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         section.appendChild(sectionTitle);
 
         const OPTIONS: {
-            key: keyof PlotlyPluginConfig;
+            key: keyof Omit<PlotlyPluginConfig, "tradingHours">;
             label: string;
         }[] = [
             { key: "scrollZoom", label: "Scroll Zoom" },
@@ -272,6 +275,156 @@ export class HTMLPerspectiveViewerPlotlyToolbarElement extends HTMLElement {
         settings.plotly_column_styles[columnName] = {
             ...(settings.plotly_column_styles[columnName] || {}),
             ...update,
+        };
+
+        this.dispatchEvent(
+            new Event("perspective-plugin-update", {
+                bubbles: true,
+                composed: true,
+            }),
+        );
+
+        plugin._draw();
+    }
+
+    private _buildTradingHoursSection(
+        panel: HTMLElement,
+        plugin: PlotlyPluginElement,
+        settings: PlotlySettings,
+    ): void {
+        const thConfig: TradingHoursConfig = settings.plotly_plugin_config
+            ?.tradingHours ?? {
+            enabled: false,
+            sessions: [
+                { start: "09:00", end: "11:30" },
+                { start: "13:30", end: "15:00" },
+            ],
+            excludeWeekends: true,
+        };
+
+        const section = document.createElement("div");
+        section.className = "trading-hours-section";
+
+        const sectionTitle = document.createElement("div");
+        sectionTitle.className = "style-panel-title";
+        sectionTitle.textContent = "Trading Hours";
+        section.appendChild(sectionTitle);
+
+        const enableRow = document.createElement("label");
+        enableRow.className = "config-row";
+        const enableCheckbox = document.createElement("input");
+        enableCheckbox.type = "checkbox";
+        enableCheckbox.checked = thConfig.enabled;
+        enableRow.appendChild(enableCheckbox);
+        const enableLabel = document.createElement("span");
+        enableLabel.textContent = "Enable Trading Hours";
+        enableRow.appendChild(enableLabel);
+        section.appendChild(enableRow);
+
+        const detailContainer = document.createElement("div");
+        detailContainer.className = "trading-hours-detail";
+        detailContainer.style.display = thConfig.enabled ? "block" : "none";
+
+        const weekendRow = document.createElement("label");
+        weekendRow.className = "config-row";
+        const weekendCheckbox = document.createElement("input");
+        weekendCheckbox.type = "checkbox";
+        weekendCheckbox.checked = thConfig.excludeWeekends;
+        weekendRow.appendChild(weekendCheckbox);
+        const weekendLabel = document.createElement("span");
+        weekendLabel.textContent = "Exclude Weekends";
+        weekendRow.appendChild(weekendLabel);
+        detailContainer.appendChild(weekendRow);
+
+        const sessionList = document.createElement("div");
+        sessionList.className = "trading-session-list";
+
+        const renderSessions = () => {
+            sessionList.innerHTML = "";
+            const sessions = thConfig.sessions;
+            for (let i = 0; i < sessions.length; i++) {
+                const s = sessions[i];
+                const row = document.createElement("div");
+                row.className = "trading-session-row";
+
+                const startInput = document.createElement("input");
+                startInput.type = "time";
+                startInput.value = s.start;
+                startInput.addEventListener("change", () => {
+                    sessions[i] = { ...sessions[i], start: startInput.value };
+                    this._updateTradingHours(thConfig);
+                });
+
+                const sep = document.createElement("span");
+                sep.className = "trading-session-sep";
+                sep.textContent = "\u2013";
+
+                const endInput = document.createElement("input");
+                endInput.type = "time";
+                endInput.value = s.end;
+                endInput.addEventListener("change", () => {
+                    sessions[i] = { ...sessions[i], end: endInput.value };
+                    this._updateTradingHours(thConfig);
+                });
+
+                const removeBtn = document.createElement("button");
+                removeBtn.className = "trading-session-remove";
+                removeBtn.textContent = "\u00d7";
+                removeBtn.title = "Remove session";
+                removeBtn.addEventListener("click", () => {
+                    sessions.splice(i, 1);
+                    this._updateTradingHours(thConfig);
+                    renderSessions();
+                });
+
+                row.appendChild(startInput);
+                row.appendChild(sep);
+                row.appendChild(endInput);
+                row.appendChild(removeBtn);
+                sessionList.appendChild(row);
+            }
+        };
+
+        renderSessions();
+        detailContainer.appendChild(sessionList);
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "trading-session-add";
+        addBtn.textContent = "+ Add Session";
+        addBtn.addEventListener("click", () => {
+            thConfig.sessions.push({ start: "09:00", end: "17:00" });
+            this._updateTradingHours(thConfig);
+            renderSessions();
+        });
+        detailContainer.appendChild(addBtn);
+
+        enableCheckbox.addEventListener("change", () => {
+            thConfig.enabled = enableCheckbox.checked;
+            detailContainer.style.display = thConfig.enabled ? "block" : "none";
+            this._updateTradingHours(thConfig);
+        });
+
+        weekendCheckbox.addEventListener("change", () => {
+            thConfig.excludeWeekends = weekendCheckbox.checked;
+            this._updateTradingHours(thConfig);
+        });
+
+        section.appendChild(detailContainer);
+        panel.appendChild(section);
+    }
+
+    private _updateTradingHours(config: TradingHoursConfig): void {
+        const plugin = this._getPlugin();
+        if (!plugin?._settings) return;
+
+        const settings = plugin._settings;
+        if (!settings.plotly_plugin_config) {
+            settings.plotly_plugin_config = {};
+        }
+
+        settings.plotly_plugin_config = {
+            ...settings.plotly_plugin_config,
+            tradingHours: { ...config, sessions: [...config.sessions] },
         };
 
         this.dispatchEvent(

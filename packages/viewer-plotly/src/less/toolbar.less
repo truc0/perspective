@@ -207,3 +207,77 @@
         cursor: pointer;
     }
 }
+
+.trading-hours-section {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--inactive--border-color, #eee);
+}
+
+.trading-hours-detail {
+    margin-top: 4px;
+}
+
+.trading-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 6px 0;
+}
+
+.trading-session-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    input[type="time"] {
+        font-size: 11px;
+        padding: 2px 4px;
+        border: 1px solid var(--inactive--border-color, #ccc);
+        border-radius: 3px;
+        background: var(--plugin--background, #fff);
+        color: inherit;
+        width: 80px;
+        box-sizing: border-box;
+    }
+}
+
+.trading-session-sep {
+    font-size: 11px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.trading-session-remove {
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    opacity: 0.5;
+    flex-shrink: 0;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+.trading-session-add {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px dashed var(--inactive--border-color, #ccc);
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    opacity: 0.7;
+
+    &:hover {
+        opacity: 1;
+        border-style: solid;
+    }
+}

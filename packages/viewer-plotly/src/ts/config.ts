@@ -11,11 +11,20 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 import type { PlotlyPluginConfig } from "./types";
+import { applyTradingHoursToLayout } from "./data/tradingHours";
 
 export const DEFAULT_PLUGIN_CONFIG: Required<PlotlyPluginConfig> = {
     scrollZoom: true,
     enableDrawline: false,
     showlegend: true,
+    tradingHours: {
+        enabled: false,
+        sessions: [
+            { start: "09:00", end: "11:30" },
+            { start: "13:30", end: "15:00" },
+        ],
+        excludeWeekends: true,
+    },
 };
 
 export function resolveConfig(
@@ -42,6 +51,8 @@ export function buildPlotlyConfig(
 export function applyConfigToLayout(
     layout: Partial<Plotly.Layout>,
     config: Required<PlotlyPluginConfig>,
+    isDateAxis?: boolean,
 ): void {
     layout.showlegend = config.showlegend;
+    applyTradingHoursToLayout(layout, config.tradingHours, isDateAxis ?? false);
 }

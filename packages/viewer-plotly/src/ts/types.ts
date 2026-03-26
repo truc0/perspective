@@ -56,10 +56,22 @@ export interface PlotlyColumnStyle {
 
 export type PlotlyColumnStyles = Record<string, PlotlyColumnStyle>;
 
+export interface TradingSession {
+    start: string;
+    end: string;
+}
+
+export interface TradingHoursConfig {
+    enabled: boolean;
+    sessions: TradingSession[];
+    excludeWeekends: boolean;
+}
+
 export interface PlotlyPluginConfig {
     scrollZoom?: boolean;
     enableDrawline?: boolean;
     showlegend?: boolean;
+    tradingHours?: TradingHoursConfig;
 }
 
 export interface PlotlySettings {

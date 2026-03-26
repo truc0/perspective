@@ -26,7 +26,11 @@ const lineChart: PlotlyChart = async function (
 ) {
     const { traces, layout } = toLineTraces(settings);
     const resolved = resolveConfig(settings.plotly_plugin_config);
-    applyConfigToLayout(layout, resolved);
+    const isDate =
+        settings.crossValues.length === 1 &&
+        (settings.crossValues[0].type === "date" ||
+            settings.crossValues[0].type === "datetime");
+    applyConfigToLayout(layout, resolved, isDate);
     await Plotly.react(container, traces, layout, buildPlotlyConfig(resolved));
     attachDrawlineHandlers(container, resolved.enableDrawline);
 };

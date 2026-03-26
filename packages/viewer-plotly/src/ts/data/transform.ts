@@ -145,10 +145,7 @@ function getColumnColor(settings: PlotlySettings, colName: string): string {
     return PLOTLY_COLORS[Math.max(0, idx) % PLOTLY_COLORS.length];
 }
 
-function hasUserColor(
-    colName: string,
-    styles?: PlotlyColumnStyles,
-): boolean {
+function hasUserColor(colName: string, styles?: PlotlyColumnStyles): boolean {
     return !!styles?.[colName]?.color;
 }
 
@@ -445,9 +442,7 @@ function toScatterTracesSplit(settings: PlotlySettings): TraceResult {
         const yKey = nCols >= 2 ? keys[1] : undefined;
 
         const xValues = settings.data.map((row) => row[xKey]);
-        const yValues = yKey
-            ? settings.data.map((row) => row[yKey])
-            : [];
+        const yValues = yKey ? settings.data.map((row) => row[yKey]) : [];
 
         const trace: Plotly.Data = {
             type: "scatter" as const,
@@ -474,13 +469,9 @@ function toScatterTracesSplit(settings: PlotlySettings): TraceResult {
         traces.push(trace);
 
         const xColName =
-            settings.mainValues.length >= 1
-                ? settings.mainValues[0].name
-                : "";
+            settings.mainValues.length >= 1 ? settings.mainValues[0].name : "";
         const yColName =
-            settings.mainValues.length >= 2
-                ? settings.mainValues[1].name
-                : "";
+            settings.mainValues.length >= 2 ? settings.mainValues[1].name : "";
 
         (layout as any)[axes.xAxisKey] = {
             domain: axes.xDomain,
